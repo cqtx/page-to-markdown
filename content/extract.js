@@ -50,6 +50,16 @@
       return;
     }
 
+    // DEBUG: log what images Readability kept
+    var debugDiv = document.createElement("div");
+    debugDiv.innerHTML = article.content;
+    var keptImgs = debugDiv.querySelectorAll("img");
+    console.log("[Page→MD] Readability kept " + keptImgs.length + " images:");
+    keptImgs.forEach(function (img, i) {
+      console.log("[Page→MD]   [" + i + "] src=" + (img.getAttribute("src") || "(none)").slice(0, 100));
+      console.log("[Page→MD]   [" + i + "] class=" + (img.getAttribute("class") || "(none)"));
+    });
+
     // ── 2. Configure Turndown ────────────────────────────────────────────
     var turndownService = new TurndownService({
       headingStyle: "atx",
