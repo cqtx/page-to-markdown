@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Page to Markdown",
+  "version": "1.0.0",
+  "description": "Extract web page content as a clean Markdown document with frontmatter. One click, instant download.",
+  "homepage_url": "https://github.com/quinteros/page-to-markdown",
+  "author": "Cesar Quinteros",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads"
+  ],
+  "host_permissions": [],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "Extract page as Markdown",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "page-to-markdown@quinteros.org",
+      "strict_min_version": "115.0"
+    }
+  }
+}

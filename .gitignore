@@ -1,0 +1,15 @@
+# Build artifacts
+*.zip
+*.xpi
+web-ext-artifacts/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Node (if adding build tooling later)
+node_modules/
