@@ -4,9 +4,13 @@
  * Extracts page content, converts to Markdown, triggers download in-page.
  */
 
-(function () {
+(async function () {
   try {
-    // ── 0. Resolve lazy-loaded images before cloning ─────────────────────
+    // ── 0. Read preferences ─────────────────────────────────────────────
+    var prefs = await browser.storage.local.get("includeImages");
+    var includeImages = prefs.includeImages !== false; // default true
+
+    // ── 1. Resolve lazy-loaded images ────────────────────────────────────
     // News sites (CNN, NYT, etc.) defer loading with data-src / srcset.
     // Readability clones the DOM as-is, so we must resolve sources first.
     document.querySelectorAll("img").forEach(function (img) {
@@ -92,46 +96,48 @@
       }
     });
 
-    // Image rule — preserve content images, skip icons/trackers/pixels
-    turndownService.addRule("content-images", {
-      filter: function (node) {
-        if (node.nodeName === "IMG") {
-          var src = node.getAttribute("src") || "";
-          if (!src) return false;
-          if (src.indexOf("1x1") !== -1 || src.indexOf("pixel") !== -1 || src.indexOf("spacer") !== -1) return false;
-          var w = parseInt(node.getAttribute("width") || "0", 10);
-          var h = parseInt(node.getAttribute("height") || "0", 10);
-          if (w > 0 && w <= 25 && h > 0 && h <= 25) return false;
-          return true;
+    // Image rule — preserve content images, skip icons/trackers/pixels (only if enabled)
+    if (includeImages) {
+      turndownService.addRule("content-images", {
+        filter: function (node) {
+          if (node.nodeName === "IMG") {
+            var src = node.getAttribute("src") || "";
+            if (!src) return false;
+            if (src.indexOf("1x1") !== -1 || src.indexOf("pixel") !== -1 || src.indexOf("spacer") !== -1) return false;
+            var w = parseInt(node.getAttribute("width") || "0", 10);
+            var h = parseInt(node.getAttribute("height") || "0", 10);
+            if (w > 0 && w <= 25 && h > 0 && h <= 25) return false;
+            return true;
+          }
+          if (node.nodeName === "PICTURE") return true;
+          if (node.nodeName === "FIGURE") return true;
+          return false;
+        },
+        replacement: function (content, node) {
+          if (node.nodeName === "IMG") {
+            var src = node.getAttribute("src") || "";
+            var alt = node.getAttribute("alt") || "Image";
+            return src ? "\n\n![" + alt + "](" + src + ")\n\n" : "";
+          }
+          if (node.nodeName === "PICTURE") {
+            var img = node.querySelector("img");
+            if (!img) return "";
+            var src = img.getAttribute("src") || "";
+            var alt = img.getAttribute("alt") || "Image";
+            return src ? "\n\n![" + alt + "](" + src + ")\n\n" : "";
+          }
+          if (node.nodeName === "FIGURE") {
+            var img = node.querySelector("img");
+            var cap = node.querySelector("figcaption");
+            if (!img) return content;
+            var src = img.getAttribute("src") || "";
+            var alt = cap ? cap.textContent.trim() : (img.getAttribute("alt") || "Image");
+            return src ? "\n\n![" + alt + "](" + src + ")\n\n" : content;
+          }
+          return content;
         }
-        if (node.nodeName === "PICTURE") return true;
-        if (node.nodeName === "FIGURE") return true;
-        return false;
-      },
-      replacement: function (content, node) {
-        if (node.nodeName === "IMG") {
-          var src = node.getAttribute("src") || "";
-          var alt = node.getAttribute("alt") || "Image";
-          return src ? "\n\n![" + alt + "](" + src + ")\n\n" : "";
-        }
-        if (node.nodeName === "PICTURE") {
-          var img = node.querySelector("img");
-          if (!img) return "";
-          var src = img.getAttribute("src") || "";
-          var alt = img.getAttribute("alt") || "Image";
-          return src ? "\n\n![" + alt + "](" + src + ")\n\n" : "";
-        }
-        if (node.nodeName === "FIGURE") {
-          var img = node.querySelector("img");
-          var cap = node.querySelector("figcaption");
-          if (!img) return content;
-          var src = img.getAttribute("src") || "";
-          var alt = cap ? cap.textContent.trim() : (img.getAttribute("alt") || "Image");
-          return src ? "\n\n![" + alt + "](" + src + ")\n\n" : content;
-        }
-        return content;
-      }
-    });
+      });
+    }
 
     // ── 3. Convert to Markdown ──────────────────────────────────────────
     let bodyMarkdown = turndownService.turndown(article.content);
