@@ -2,12 +2,6 @@
   <!-- Background circle -->
   <circle cx="48" cy="48" r="44" fill="#1a1a2e" stroke="#4a9eff" stroke-width="3"/>
   
-  <!-- "MD" text in large bold -->
-  <text x="48" y="44" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900" fill="#4a9eff" text-anchor="middle" letter-spacing="-1">MD</text>
-  
-  <!-- Down arrow below MD -->
-  <polygon points="48,58 38,68 44,68 44,80 52,80 52,68 58,68" fill="#4a9eff"/>
-  
-  <!-- Subtle page fold corner -->
-  <polygon points="78,16 78,24 70,16" fill="#2a2a4e" opacity="0.6"/>
+  <!-- "MD" text centered -->
+  <text x="48" y="58" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="900" fill="#4a9eff" text-anchor="middle" letter-spacing="-1">MD</text>
 </svg>
