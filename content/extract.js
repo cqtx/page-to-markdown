@@ -1,7 +1,7 @@
 /**
  * Page to Markdown — Firefox Extension
- * content/extract.js — Injected into the page to extract and convert content.
- * Returns {markdown, filename, title} or {error} via executeScript result.
+ * content/extract.js — Injected alongside Readability.js + Turndown.js.
+ * Extracts page content, converts to Markdown, triggers download in-page.
  */
 
 (function () {
@@ -12,32 +12,29 @@
     const article = reader.parse();
 
     if (!article || !article.content) {
-      return {
-        error: "Readability could not extract content from this page. "
-             + "The page may be a web app, have no article content, "
-             + "or block reader mode."
-      };
+      console.warn("[Page→MD] Readability could not extract content from this page.");
+      return;
     }
 
     // ── 2. Configure Turndown ────────────────────────────────────────────
     const turndownService = new TurndownService({
-      headingStyle: "atx",        // # headings, not underlined
-      codeBlockStyle: "fenced",   // ``` fences
-      bulletListMarker: "-",      // dashes for lists
-      emDelimiter: "*",           // *italic*
-      strongDelimiter: "**",      // **bold**
-      linkStyle: "inlined"        // [text](url)
+      headingStyle: "atx",
+      codeBlockStyle: "fenced",
+      bulletListMarker: "-",
+      emDelimiter: "*",
+      strongDelimiter: "**",
+      linkStyle: "inlined"
     });
 
-    // Strip nav, footer, script, style, and hidden elements
+    // Strip nav, footer, script, style, hidden elements
     turndownService.addRule("strip-chrome", {
       filter: ["nav", "footer", "script", "style", "noscript", "iframe"],
       replacement: () => ""
     });
 
-    // Clean up code blocks: remove extra blank lines
+    // Preserve code blocks with language hints
     turndownService.addRule("compact-code", {
-      filter: function (node, options) {
+      filter: function (node) {
         return (
           node.nodeName === "PRE" &&
           node.firstChild &&
@@ -46,18 +43,14 @@
       },
       replacement: function (content, node) {
         const code = node.firstChild.textContent;
-        const lang = node.firstChild.className.replace("language-", "") || "";
+        const lang = (node.firstChild.className || "").replace("language-", "");
         return "\n\n```" + lang + "\n" + code.trim() + "\n```\n\n";
       }
     });
 
     // ── 3. Convert to Markdown ──────────────────────────────────────────
     let bodyMarkdown = turndownService.turndown(article.content);
-
-    // Clean up: collapse 3+ blank lines into 2
     bodyMarkdown = bodyMarkdown.replace(/\n{3,}/g, "\n\n");
-
-    // Clean up: remove trailing whitespace on lines
     bodyMarkdown = bodyMarkdown.replace(/[ \t]+$/gm, "");
 
     // ── 4. Build frontmatter ────────────────────────────────────────────
@@ -67,11 +60,9 @@
       .replace(/\n/g, " ")
       .trim()
       .slice(0, 200);
-
     const byline = article.byline
       ? `\nbyline: "${article.byline.replace(/"/g, '\\"')}"`
       : "";
-
     const siteName = article.siteName
       ? `\nsite_name: "${article.siteName.replace(/"/g, '\\"')}"`
       : "";
@@ -93,23 +84,32 @@
 
     // ── 5. Generate safe filename ───────────────────────────────────────
     const filename = article.title
-      .replace(/[<>:"/\\|?*\x00-\x1f]/g, "")  // strip illegal fs chars
-      .replace(/\s+/g, "_")                     // spaces → underscores
-      .replace(/_+/g, "_")                      // collapse repeats
-      .replace(/^_|_$/g, "")                    // trim underscores
-      .slice(0, 120)                            // reasonable max length
-      + ".md";
+      .replace(/[<>:"/\\|?*\x00-\x1f]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "")
+      .slice(0, 120) + ".md";
 
-    // ── 6. Return result ────────────────────────────────────────────────
-    return {
-      markdown: fullMarkdown,
-      filename: filename,
-      title: article.title
-    };
+    // ── 6. Trigger download in-page (avoids Firefox data:-URL restriction)
+    const blob = new Blob([fullMarkdown], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    console.log(`[Page→MD] Downloaded: ${filename} (${fullMarkdown.length} chars)`);
 
   } catch (err) {
-    return {
-      error: err.message || "Unknown extraction error"
-    };
+    console.error("[Page→MD] Extraction failed:", err.message);
   }
 })();
