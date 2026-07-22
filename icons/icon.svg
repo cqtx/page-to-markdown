@@ -1,17 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
-  <!-- Background: document shape -->
-  <rect x="14" y="6" width="68" height="84" rx="6" ry="6" fill="#2d2d2d" stroke="#5a5a5a" stroke-width="2"/>
+  <!-- Background circle -->
+  <circle cx="48" cy="48" r="44" fill="#1a1a2e" stroke="#4a9eff" stroke-width="3"/>
   
-  <!-- Lines representing text -->
-  <rect x="24" y="22" width="48" height="4" rx="2" fill="#888"/>
-  <rect x="24" y="32" width="40" height="4" rx="2" fill="#888"/>
-  <rect x="24" y="42" width="44" height="4" rx="2" fill="#888"/>
-  <rect x="24" y="52" width="36" height="4" rx="2" fill="#888"/>
+  <!-- "MD" text in large bold -->
+  <text x="48" y="44" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900" fill="#4a9eff" text-anchor="middle" letter-spacing="-1">MD</text>
   
-  <!-- Markdown # heading indicator -->
-  <rect x="24" y="66" width="16" height="16" rx="3" fill="#4a9eff"/>
-  <text x="32" y="78" font-family="monospace" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">#</text>
+  <!-- Down arrow below MD -->
+  <polygon points="48,58 38,68 44,68 44,80 52,80 52,68 58,68" fill="#4a9eff"/>
   
-  <!-- Download arrow -->
-  <polygon points="72,58 72,78 84,78 66,92 48,78 60,78 60,58" fill="#4a9eff"/>
+  <!-- Subtle page fold corner -->
+  <polygon points="78,16 78,24 70,16" fill="#2a2a4e" opacity="0.6"/>
 </svg>

@@ -6,10 +6,44 @@
 
 (function () {
   try {
+    // ── 0. Resolve lazy-loaded images before cloning ─────────────────────
+    // News sites (CNN, NYT, etc.) defer loading with data-src / srcset.
+    // Readability clones the DOM as-is, so we must resolve sources first.
+    document.querySelectorAll("img").forEach(function (img) {
+      var src = img.getAttribute("src") || "";
+      if (!src || src.startsWith("data:") || src.indexOf("placeholder") !== -1) {
+        var lazy =
+          img.getAttribute("data-src") ||
+          img.getAttribute("data-lazy-src") ||
+          img.getAttribute("data-original");
+        if (lazy) img.setAttribute("src", lazy);
+      }
+      if (!img.getAttribute("src") || img.getAttribute("src").startsWith("data:")) {
+        var srcset = img.getAttribute("srcset");
+        if (srcset) {
+          var first = srcset.split(",")[0].trim().split(" ")[0];
+          if (first) img.setAttribute("src", first);
+        }
+      }
+    });
+    // <picture> elements — pull src from <source> into inner <img>
+    document.querySelectorAll("picture").forEach(function (picture) {
+      var img = picture.querySelector("img");
+      if (!img || img.getAttribute("src")) return;
+      var sources = picture.querySelectorAll("source");
+      for (var i = 0; i < sources.length; i++) {
+        var s = sources[i].getAttribute("srcset") || sources[i].getAttribute("data-srcset");
+        if (s) {
+          var first = s.split(",")[0].trim().split(" ")[0];
+          if (first) { img.setAttribute("src", first); break; }
+        }
+      }
+    });
+
     // ── 1. Extract readable content ──────────────────────────────────────
-    const documentClone = document.cloneNode(true);
-    const reader = new Readability(documentClone);
-    const article = reader.parse();
+    var documentClone = document.cloneNode(true);
+    var reader = new Readability(documentClone);
+    var article = reader.parse();
 
     if (!article || !article.content) {
       console.warn("[Page→MD] Readability could not extract content from this page.");
@@ -17,7 +51,7 @@
     }
 
     // ── 2. Configure Turndown ────────────────────────────────────────────
-    const turndownService = new TurndownService({
+    var turndownService = new TurndownService({
       headingStyle: "atx",
       codeBlockStyle: "fenced",
       bulletListMarker: "-",
@@ -29,7 +63,7 @@
     // Strip nav, footer, script, style, hidden elements
     turndownService.addRule("strip-chrome", {
       filter: ["nav", "footer", "script", "style", "noscript", "iframe"],
-      replacement: () => ""
+      replacement: function () { return ""; }
     });
 
     // Preserve code blocks with language hints
@@ -42,9 +76,50 @@
         );
       },
       replacement: function (content, node) {
-        const code = node.firstChild.textContent;
-        const lang = (node.firstChild.className || "").replace("language-", "");
+        var code = node.firstChild.textContent;
+        var lang = (node.firstChild.className || "").replace("language-", "");
         return "\n\n```" + lang + "\n" + code.trim() + "\n```\n\n";
+      }
+    });
+
+    // Image rule — preserve content images, skip icons/trackers/pixels
+    turndownService.addRule("content-images", {
+      filter: function (node) {
+        if (node.nodeName === "IMG") {
+          var src = node.getAttribute("src") || "";
+          if (!src) return false;
+          if (src.indexOf("1x1") !== -1 || src.indexOf("pixel") !== -1 || src.indexOf("spacer") !== -1) return false;
+          var w = parseInt(node.getAttribute("width") || "0", 10);
+          var h = parseInt(node.getAttribute("height") || "0", 10);
+          if (w > 0 && w <= 25 && h > 0 && h <= 25) return false;
+          return true;
+        }
+        if (node.nodeName === "PICTURE") return true;
+        if (node.nodeName === "FIGURE") return true;
+        return false;
+      },
+      replacement: function (content, node) {
+        if (node.nodeName === "IMG") {
+          var src = node.getAttribute("src") || "";
+          var alt = node.getAttribute("alt") || "Image";
+          return src ? "\n\n![" + alt + "](" + src + ")\n\n" : "";
+        }
+        if (node.nodeName === "PICTURE") {
+          var img = node.querySelector("img");
+          if (!img) return "";
+          var src = img.getAttribute("src") || "";
+          var alt = img.getAttribute("alt") || "Image";
+          return src ? "\n\n![" + alt + "](" + src + ")\n\n" : "";
+        }
+        if (node.nodeName === "FIGURE") {
+          var img = node.querySelector("img");
+          var cap = node.querySelector("figcaption");
+          if (!img) return content;
+          var src = img.getAttribute("src") || "";
+          var alt = cap ? cap.textContent.trim() : (img.getAttribute("alt") || "Image");
+          return src ? "\n\n![" + alt + "](" + src + ")\n\n" : content;
+        }
+        return content;
       }
     });
 
