@@ -131,14 +131,14 @@
           if (node.nodeName === "IMG") {
             var src = node.getAttribute("src") || "";
             var alt = node.getAttribute("alt") || "Image";
-            return src ? "\n\n![" + alt + "](" + src + ")\n\n" : "";
+            return src ? "![" + alt + "](" + src + ")" : "";
           }
           if (node.nodeName === "PICTURE") {
             var img = node.querySelector("img");
             if (!img) return "";
             var src = img.getAttribute("src") || "";
             var alt = img.getAttribute("alt") || "Image";
-            return src ? "\n\n![" + alt + "](" + src + ")\n\n" : "";
+            return src ? "![" + alt + "](" + src + ")" : "";
           }
           if (node.nodeName === "FIGURE") {
             var img = node.querySelector("img");
@@ -146,7 +146,7 @@
             if (!img) return content;
             var src = img.getAttribute("src") || "";
             var alt = cap ? cap.textContent.trim() : (img.getAttribute("alt") || "Image");
-            return src ? "\n\n![" + alt + "](" + src + ")\n\n" : content;
+            return src ? "![" + alt + "](" + src + ")" : content;
           }
           return content;
         }
