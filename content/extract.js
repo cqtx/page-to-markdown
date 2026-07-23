@@ -59,6 +59,25 @@
     console.log("[Page→MD] Live DOM CNN images (" + liveSrcs.length + "):",
       liveSrcs);
 
+    // ── Capture content images before Readability strips them ──────────
+    var capturedImages = [];
+    if (includeImages) {
+      document.querySelectorAll("img").forEach(function (img) {
+        var src = img.getAttribute("src") || "";
+        var alt = img.getAttribute("alt") || "";
+        var cls = img.getAttribute("class") || "";
+        var w = parseInt(img.getAttribute("width") || "0", 10);
+        var h = parseInt(img.getAttribute("height") || "0", 10);
+        // Skip: data URIs, tiny icons, byline/avatar images, QR codes
+        if (!src || src.startsWith("data:")) return;
+        if (w > 0 && w <= 50 && h > 0 && h <= 50) return;
+        if (cls.indexOf("byline") !== -1 || cls.indexOf("qr-code") !== -1) return;
+        if (src.indexOf("1x1") !== -1 || src.indexOf("pixel") !== -1) return;
+        capturedImages.push({ src: src, alt: alt || "Image" });
+      });
+      console.log("[Page→MD] Captured " + capturedImages.length + " content images before Readability");
+    }
+
     var documentClone = document.cloneNode(true);
     var reader = new Readability(documentClone);
     var article = reader.parse();
@@ -77,6 +96,26 @@
       console.log("[Page→MD]   [" + i + "] src=" + (img.getAttribute("src") || "(none)").slice(0, 100));
       console.log("[Page→MD]   [" + i + "] class=" + (img.getAttribute("class") || "(none)"));
     });
+
+    // ── Recover images that Readability dropped ────────────────────────
+    if (includeImages && capturedImages.length > keptImgs.length) {
+      var existingSrcs = [];
+      keptImgs.forEach(function (img) {
+        existingSrcs.push(img.getAttribute("src") || "");
+      });
+
+      var recovered = 0;
+      capturedImages.forEach(function (img) {
+        if (existingSrcs.indexOf(img.src) === -1) {
+          article.content += '<img src="' + img.src + '" alt="' + img.alt.replace(/"/g, "&quot;") + '">';
+          recovered++;
+        }
+      });
+
+      if (recovered > 0) {
+        console.log("[Page→MD] Recovered " + recovered + " dropped images");
+      }
+    }
 
     // ── 2. Configure Turndown ────────────────────────────────────────────
     var turndownService = new TurndownService({
