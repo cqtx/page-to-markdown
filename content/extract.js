@@ -137,24 +137,32 @@
 
     // Handle links that contain only an image (author headshots, etc.)
     // Prevents broken markdown with blank lines inside [...](url)
-    turndownService.addRule("image-links", {
-      filter: function (node) {
-        return (
-          node.nodeName === "A" &&
-          node.querySelector("img") &&
-          node.textContent.trim() === ""
-        );
-      },
-      replacement: function (content, node) {
-        var img = node.querySelector("img");
-        var src = img.getAttribute("src") || "";
-        var alt = img.getAttribute("alt") || "Image";
-        var href = node.getAttribute("href") || "";
-        return href
-          ? "\n\n[![" + alt + "](" + src + ")](" + href + ")\n\n"
-          : "\n\n![" + alt + "](" + src + ")\n\n";
-      }
-    });
+    if (includeImages) {
+      turndownService.addRule("image-links", {
+        filter: function (node) {
+          return (
+            node.nodeName === "A" &&
+            node.querySelector("img") &&
+            node.textContent.trim() === ""
+          );
+        },
+        replacement: function (content, node) {
+          var img = node.querySelector("img");
+          var src = img.getAttribute("src") || "";
+          var alt = img.getAttribute("alt") || "Image";
+          var href = node.getAttribute("href") || "";
+          return href
+            ? "\n\n[![" + alt + "](" + src + ")](" + href + ")\n\n"
+            : "\n\n![" + alt + "](" + src + ")\n\n";
+        }
+      });
+    } else {
+      // When images are off, strip all images (including Turndown's default rule)
+      turndownService.addRule("no-images", {
+        filter: ["img", "picture", "figure"],
+        replacement: function () { return ""; }
+      });
+    }
 
     // Preserve code blocks with language hints
     turndownService.addRule("compact-code", {
