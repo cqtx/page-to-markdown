@@ -135,6 +135,27 @@
       replacement: function () { return ""; }
     });
 
+    // Handle links that contain only an image (author headshots, etc.)
+    // Prevents broken markdown with blank lines inside [...](url)
+    turndownService.addRule("image-links", {
+      filter: function (node) {
+        return (
+          node.nodeName === "A" &&
+          node.querySelector("img") &&
+          node.textContent.trim() === ""
+        );
+      },
+      replacement: function (content, node) {
+        var img = node.querySelector("img");
+        var src = img.getAttribute("src") || "";
+        var alt = img.getAttribute("alt") || "Image";
+        var href = node.getAttribute("href") || "";
+        return href
+          ? "\n\n[![" + alt + "](" + src + ")](" + href + ")\n\n"
+          : "\n\n![" + alt + "](" + src + ")\n\n";
+      }
+    });
+
     // Preserve code blocks with language hints
     turndownService.addRule("compact-code", {
       filter: function (node) {
