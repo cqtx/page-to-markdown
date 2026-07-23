@@ -75,6 +75,9 @@
             src.indexOf("fwmrm") !== -1 || src.indexOf("tremorhub") !== -1 ||
             src.indexOf("onetrust") !== -1 || src.indexOf("consent") !== -1 ||
             src.indexOf("getuid") !== -1 || src.indexOf("pubsync") !== -1) return;
+        // Skip: promotional banners, logos, wordmarks
+        if (src.indexOf("promo") !== -1 || src.indexOf("wordmark") !== -1 ||
+            src.indexOf("logo") !== -1) return;
         // Skip: tiny images (avatars, bylines) — at least one dimension > 200px
         if (w <= 200 && h <= 200) return;
         // Skip: byline, avatar, or QR code classes
