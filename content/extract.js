@@ -68,11 +68,18 @@
         var cls = img.getAttribute("class") || "";
         var w = parseInt(img.getAttribute("width") || "0", 10);
         var h = parseInt(img.getAttribute("height") || "0", 10);
-        // Skip: data URIs, tiny icons, byline/avatar images, QR codes
-        if (!src || src.startsWith("data:")) return;
-        if (w > 0 && w <= 50 && h > 0 && h <= 50) return;
-        if (cls.indexOf("byline") !== -1 || cls.indexOf("qr-code") !== -1) return;
-        if (src.indexOf("1x1") !== -1 || src.indexOf("pixel") !== -1) return;
+        // Skip: no src, data URIs, SVG icons
+        if (!src || src.startsWith("data:") || src.endsWith(".svg")) return;
+        // Skip: ad trackers, consent banners, pixel endpoints
+        if (src.indexOf("adnxs") !== -1 || src.indexOf("pubmatic") !== -1 ||
+            src.indexOf("fwmrm") !== -1 || src.indexOf("tremorhub") !== -1 ||
+            src.indexOf("onetrust") !== -1 || src.indexOf("consent") !== -1 ||
+            src.indexOf("getuid") !== -1 || src.indexOf("pubsync") !== -1) return;
+        // Skip: tiny images (avatars, bylines) — at least one dimension > 200px
+        if (w <= 200 && h <= 200) return;
+        // Skip: byline, avatar, or QR code classes
+        if (cls.indexOf("byline") !== -1 || cls.indexOf("avatar") !== -1 ||
+            cls.indexOf("qr-code") !== -1) return;
         capturedImages.push({ src: src, alt: alt || "Image" });
       });
       console.log("[Page→MD] Captured " + capturedImages.length + " content images before Readability");
