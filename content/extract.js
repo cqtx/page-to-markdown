@@ -45,6 +45,20 @@
     });
 
     // ── 1. Extract readable content ──────────────────────────────────────
+
+    // DEBUG: count images in live DOM before cloning
+    var liveImgs = document.querySelectorAll("img");
+    var liveSrcs = [];
+    liveImgs.forEach(function (img) {
+      var s = img.getAttribute("src") || "";
+      var cls = img.getAttribute("class") || "";
+      if (s && s.indexOf("media.cnn.com") !== -1) {
+        liveSrcs.push(s.slice(0, 80) + " [" + cls.slice(0, 30) + "]");
+      }
+    });
+    console.log("[Page→MD] Live DOM CNN images (" + liveSrcs.length + "):",
+      liveSrcs);
+
     var documentClone = document.cloneNode(true);
     var reader = new Readability(documentClone);
     var article = reader.parse();
