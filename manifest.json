@@ -36,7 +36,8 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "page-to-markdown@quinteros.org",
-      "strict_min_version": "115.0"
+      "strict_min_version": "115.0",
+      "data_collection_permissions": []
     }
   }
 }

@@ -97,33 +97,25 @@
       return;
     }
 
-    // DEBUG: log what images Readability kept
-    var debugDiv = document.createElement("div");
-    debugDiv.innerHTML = article.content;
-    var keptImgs = debugDiv.querySelectorAll("img");
-    console.log("[Page→MD] Readability kept " + keptImgs.length + " images:");
-    keptImgs.forEach(function (img, i) {
-      console.log("[Page→MD]   [" + i + "] src=" + (img.getAttribute("src") || "(none)").slice(0, 100));
-      console.log("[Page→MD]   [" + i + "] class=" + (img.getAttribute("class") || "(none)"));
+    // ── Track which images Readability kept vs dropped ─────────────────
+    var parser = new DOMParser();
+    var contentDoc = parser.parseFromString(article.content, "text/html");
+    var keptImgs = contentDoc.querySelectorAll("img");
+    var existingSrcs = [];
+    keptImgs.forEach(function (img) {
+      existingSrcs.push(img.getAttribute("src") || "");
     });
 
-    // ── Recover images that Readability dropped ────────────────────────
+    // Collect dropped images to append as Markdown later
+    var recoveredMarkdown = "";
     if (includeImages && capturedImages.length > keptImgs.length) {
-      var existingSrcs = [];
-      keptImgs.forEach(function (img) {
-        existingSrcs.push(img.getAttribute("src") || "");
-      });
-
-      var recovered = 0;
       capturedImages.forEach(function (img) {
         if (existingSrcs.indexOf(img.src) === -1) {
-          article.content += '<img src="' + img.src + '" alt="' + img.alt.replace(/"/g, "&quot;") + '">';
-          recovered++;
+          recoveredMarkdown += "\n\n![" + img.alt + "](" + img.src + ")";
         }
       });
-
-      if (recovered > 0) {
-        console.log("[Page→MD] Recovered " + recovered + " dropped images");
+      if (recoveredMarkdown) {
+        console.log("[Page→MD] Recovered " + (capturedImages.length - keptImgs.length) + " dropped image(s)");
       }
     }
 
@@ -234,7 +226,7 @@
       ""
     ].join("\n");
 
-    const fullMarkdown = frontmatter + bodyMarkdown;
+    const fullMarkdown = frontmatter + bodyMarkdown + recoveredMarkdown;
 
     // ── 5. Generate safe filename ───────────────────────────────────────
     const filename = article.title
