@@ -8,7 +8,7 @@
   try {
     // ── 0. Read preferences ─────────────────────────────────────────────
     var prefs = await browser.storage.local.get("includeImages");
-    var includeImages = prefs.includeImages !== false; // default true
+    var includeImages = prefs.includeImages === true; // default false (opt-in)
 
     // ── 1. Resolve lazy-loaded images ────────────────────────────────────
     // News sites (CNN, NYT, etc.) defer loading with data-src / srcset.

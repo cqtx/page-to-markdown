@@ -7,7 +7,7 @@ var checkbox = document.getElementById("include-images");
 var saved = document.getElementById("saved");
 
 browser.storage.local.get("includeImages").then(function (result) {
-  checkbox.checked = result.includeImages !== false;
+  checkbox.checked = result.includeImages === true;
 });
 
 checkbox.addEventListener("change", function () {
